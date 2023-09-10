@@ -1,0 +1,164 @@
+LARM LINKER/LOCATER V2.40                                                               09/10/2023  16:13:57  PAGE 1
+
+
+LARM LINKER/LOCATER V2.40, INVOKED BY:
+C:\KEIL\ARM\BIN\LA.EXE Startup.obj, RTC.obj, UART0.obj TO RTC CASE CLASSES (DATA (0X40000000-0X40007FFF), CODE (0X0-0X7F
+>> FFF), CONST (0X0-0X7FFFF))
+
+
+CPU MODE: LITTLE ENDIAN
+
+
+INPUT MODULES INCLUDED:
+  Startup.obj (STARTUP)
+         COMMENT TYPE 0: AA V2.40a
+  RTC.obj (RTC)
+         COMMENT TYPE 0: CARM V2.40a
+  UART0.obj (UART0)
+         COMMENT TYPE 0: CARM V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (FIQ)
+         COMMENT TYPE 0: AA V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (IRQ)
+         COMMENT TYPE 0: AA V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (DABT)
+         COMMENT TYPE 0: AA V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (PABT)
+         COMMENT TYPE 0: AA V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (SWI)
+         COMMENT TYPE 0: AA V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (UNDEF)
+         COMMENT TYPE 0: AA V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (sprintf)
+         COMMENT TYPE 0: CARM V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (prnfmt)
+         COMMENT TYPE 0: CARM V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (strlen)
+         COMMENT TYPE 0: CARM V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (?C?ICALL)
+         COMMENT TYPE 0: AA V2.40a
+  C:\KEIL\ARM\LIB\CAL.LIB (UDIV)
+         COMMENT TYPE 0: AA V2.40a
+
+
+ACTIVE MEMORY CLASSES OF MODULE:  RTC (STARTUP)
+
+BASE       START      END        USED       MEMORY CLASS
+========================================================
+00000000H  40000000H  40007FFFH  000004CAH  DATA
+00000000H  00000000H  0007FFFFH  00000B64H  CODE
+00000000H  00000000H  0007FFFFH  0000005FH  CONST
+
+
+INTERRUPT FUNCTIONS
+
+TYPE  STACK SIZE    FUNCTION NAME
+=================================
+irq                 RTC_ISR?A
+
+
+
+
+MEMORY MAP OF MODULE:  RTC (STARTUP)
+
+START      STOP       LENGTH    ALIGN  RELOC  MEMORY CLASS   SEGMENT NAME
+=========================================================================
+00000000H  0000010FH  00000110H     4  AT..   CODE           STARTUPCODE
+00000110H  00000147H  00000038H     4  UNIT   CONST          ?CON?RTC
+00000148H  0000014EH  00000007H     4  UNIT   CONST          ?CON?prnfmt
+0000014FH  0000014FH  00000001H   ---  ---    **GAP**
+00000150H  00000167H  00000018H     4  UNIT   CONST          ?C_CLRSEG
+LARM LINKER/LOCATER V2.40                                                             09/10/2023  16:13:57  PAGE 2
+
+
+00000168H  0000016FH  00000008H     4  UNIT   CONST          ?C_INITSEG
+00000170H  000001FFH  00000090H     4  UNIT   CODE           ?PR?RTC_ISR?A?RTC
+00000200H  00000253H  00000054H     4  UNIT   CODE           ?PR?RTC_Set_Time?T?RTC
+00000254H  000002A7H  00000054H     4  UNIT   CODE           ?PR?RTC_Set_Alarm_Time?T?RTC
+000002A8H  00000317H  00000070H     4  UNIT   CODE           ?PR?RTC_Get_Time?T?RTC
+00000318H  0000052BH  00000214H     4  UNIT   CODE           ?PR?main?RTC
+0000052CH  0000054FH  00000024H     4  UNIT   CODE           ?PR?delay_ms?T?UART0
+00000550H  0000058FH  00000040H     4  UNIT   CODE           ?PR?UART0_init?T?UART0
+00000590H  000005ABH  0000001CH     4  UNIT   CODE           ?PR?UART0_TxChar?T?UART0
+000005ACH  000005CBH  00000020H     4  UNIT   CODE           ?PR?UART0_SendString?T?UART0
+000005CCH  000005CFH  00000004H     4  UNIT   CODE           ?C?FIQ
+000005D0H  000005D3H  00000004H     4  UNIT   CODE           ?C?IRQ
+000005D4H  000005D7H  00000004H     4  UNIT   CODE           ?C?DABT
+000005D8H  000005DBH  00000004H     4  UNIT   CODE           ?C?PABT
+000005DCH  000005E3H  00000008H     4  UNIT   CODE           ?C?UNDEF
+000005E4H  000005FFH  0000001CH     4  UNIT   CODE           ?PR?out?T?sprintf
+00000600H  0000063FH  00000040H     4  UNIT   CODE           ?PR?sprintf?T?sprintf
+00000640H  0000066FH  00000030H     4  UNIT   CODE           ?PR?charout?T?prnfmt
+00000670H  000006ABH  0000003CH     4  UNIT   CODE           ?PR?numout?T?prnfmt
+000006ACH  0000076BH  000000C0H     4  UNIT   CODE           ?PR?signout?T?prnfmt
+0000076CH  00000B4BH  000003E0H     4  UNIT   CODE           ?PR?__prnfmt?T?prnfmt
+00000B4CH  00000B6BH  00000020H     4  UNIT   CODE           ?PR?strlen?T?strlen
+00000B6CH  00000B7BH  00000010H     4  UNIT   CODE           ?PR?C?ICALL
+00000B7CH  00000BC3H  00000048H     4  UNIT   CODE           ?PR?C?UDIV
+00000BC4H  3FFFFFFFH  3FFFF43CH   ---  ---    **GAP**
+40000000H  4000048FH  00000490H     4  UNIT   DATA           STACK
+40000490H  40000497H  00000008H     4  UNIT   DATA           ?DT0?RTC
+40000498H  400004C9H  00000032H     4  UNIT   DATA           ?DT0?UART0
+
+
+
+REMOVED FUNCTIONS OF MODULE:  RTC (STARTUP)
+
+      ATTRIBUTE  FUNCTION NAME
+      ========================
+       unused    UART0_RxChar?T
+       unused    UART0_RxString?T
+
+
+
+PUBLIC SYMBOLS OF MODULE:  RTC (STARTUP)
+
+      VALUE      CLASS    TYPE      PUBLIC SYMBOL NAME
+      ================================================
+      00000150H  ---      ---       ?C?CLRTAB
+      00000B6CH  CODE     ---       ?C?ICALL0?T
+      00000B6EH  CODE     ---       ?C?ICALL1?T
+      00000B70H  CODE     ---       ?C?ICALL2?T
+      00000B72H  CODE     ---       ?C?ICALL3?T
+      00000B74H  CODE     ---       ?C?ICALL4?T
+      00000B76H  CODE     ---       ?C?ICALL5?T
+      00000B78H  CODE     ---       ?C?ICALL6?T
+      00000B7AH  CODE     ---       ?C?ICALL7?T
+      00000318H  ---      ---       ?C?INIT
+      00000168H  ---      ---       ?C?INITTAB
+      00000B80H  CODE     ---       ?C?UDIV?A
+      00000B7CH  CODE     ---       ?C?UDIV?T
+      000005D4H  CODE     ---       DAbt_Handler?A
+      000005CCH  CODE     ---       FIQ_Handler?A
+      000005D0H  CODE     ---       IRQ_Handler?A
+      000005D8H  CODE     ---       PAbt_Handler?A
+      000002A8H  CODE     ---       RTC_Get_Time?T
+      00000170H  CODE     ---       RTC_ISR?A
+      00000254H  CODE     ---       RTC_Set_Alarm_Time?T
+      00000200H  CODE     ---       RTC_Set_Time?T
+LARM LINKER/LOCATER V2.40                                                             09/10/2023  16:13:57  PAGE 3
+
+
+      000005DCH  CODE     ---       SWI_Handler?A
+      00000000H  CODE     ---       UART0_RxChar?T
+      00000000H  CODE     ---       UART0_RxString?T
+      000005ACH  CODE     ---       UART0_SendString?T
+      00000590H  CODE     ---       UART0_TxChar?T
+      00000550H  CODE     ---       UART0_init?T
+      000005E0H  CODE     ---       Undef_Handler?A
+      0000076CH  CODE     ---       __prnfmt?A
+      00000778H  CODE     ---       __prnfmt?T
+      00000000H  CODE     ---       __startup
+      40000490H  DATA     ---       alarm
+      0000052CH  CODE     ---       delay_ms?T
+      000000F0H  CODE     ---       exit?A
+      000000F4H  CODE     ---       exit?T
+      40000494H  DATA     ---       flag
+      0000034CH  CODE     ---       main
+      40000498H  DATA     ---       receive_string
+      00000600H  CODE     ---       sprintf?A
+      0000060CH  CODE     ---       sprintf?T
+      00000B4CH  CODE     ---       strlen?A
+      00000B58H  CODE     ---       strlen?T
+
+Program Size: data=1226 const=95 code=2916
+LARM RUN COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,669 @@
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 1   
+
+
+ARM COMPILER V2.40a, COMPILATION OF MODULE RTC
+OBJECT MODULE PLACED IN RTC.OBJ
+COMPILER INVOKED BY: C:\Keil\ARM\BIN\CA.exe RTC.c THUMB BROWSE DEBUG TABS(4) 
+
+stmt  level    source
+
+    1          #include "lpc214x.h"
+    2          #include "stdio.h"
+    3          #include "UART0.h"
+    4          
+    5          unsigned int alarm, flag;
+    6          
+    7          void RTC_ISR(void) __irq 
+    8          {
+    9   1          if (ILR & 0x01)
+   10   1          {
+   11   2              flag = 1;
+   12   2              ILR = ILR | 0x01;
+   13   2          }
+   14   1          if (ILR & 0x02)
+   15   1          {
+   16   2              alarm = 1;
+   17   2              ILR = ILR | 0x02;
+   18   2          }
+   19   1          VICVectAddr = 0;
+   20   1      }
+   21          
+   22          typedef struct
+   23          {
+   24              unsigned int seconds;
+   25              unsigned int minutes;
+   26              unsigned int hours;
+   27              unsigned int day_of_month;
+   28              unsigned int day_of_week;
+   29              unsigned int day_of_year;
+   30              unsigned int month;
+   31              unsigned int year;
+   32          }RTC_Time;
+   33          
+   34          void RTC_Set_Time( RTC_Time Set_Time)
+   35          {
+   36   1          SEC = Set_Time.seconds;
+   37   1          MIN = Set_Time.minutes;
+   38   1          HOUR = Set_Time.hours;
+   39   1          DOM = Set_Time.day_of_month;
+   40   1          DOW = Set_Time.day_of_week;
+   41   1          DOY = Set_Time.day_of_year;
+   42   1          MONTH = Set_Time.month;
+   43   1          YEAR = Set_Time.year;
+   44   1      }
+   45          
+   46          void RTC_Set_Alarm_Time( RTC_Time Alarm_Time)
+   47          {
+   48   1          ALSEC = Alarm_Time.seconds;
+   49   1          ALMIN = Alarm_Time.minutes;
+   50   1          ALHOUR = Alarm_Time.hours;
+   51   1          ALDOM = Alarm_Time.day_of_month;
+   52   1          ALDOW = Alarm_Time.day_of_week;
+   53   1          ALDOY = Alarm_Time.day_of_year;
+   54   1          ALMON = Alarm_Time.month;
+   55   1          ALYEAR = Alarm_Time.year;
+   56   1      }
+   57          
+   58          RTC_Time RTC_Get_Time(void)
+   59          {
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 2   
+
+   60   1          RTC_Time time;
+   61   1          time.seconds = SEC;
+   62   1          time.minutes = MIN;
+   63   1          time.hours = HOUR;
+   64   1          time.day_of_month = DOM;
+   65   1          time.day_of_week = DOW;
+   66   1          time.day_of_year = DOY;
+   67   1          time.month = MONTH;
+   68   1          time.year = YEAR;
+   69   1          return time;
+   70   1      }
+   71          
+   72          int main(void)
+   73          {
+   74   1      
+   75   1          unsigned int i;
+   76   1      
+   77   1              RTC_Time set_time, alarm_time, current_time;
+   78   1          char timestr[30], datestr[30];
+   79   1          alarm = 0;
+   80   1          flag = 0;
+   81   1          IO0DIR = 0x00000010; /* P0.4 as output pin for LED */
+   82   1          UART0_init();
+   83   1          PCONP = (PCONP | (1<<9)); /* PCRTC = 1 */
+   84   1          /* The RTC registers cannot be written to unless we make PCRTC = 1 */
+   85   1          ILR = 0x0; /* No RTC interrupts */
+   86   1          CCR = 0x12; /* 32.768kHz clock and Reset Clock Tick Counter */
+   87   1          CCR = 0x10; 
+   88   1          CIIR = 0x00; /* No interrupts */
+   89   1          AMR = 0x00; /* Alarm registers not masked */
+   90   1          VICVectAddr0 = (unsigned) RTC_ISR;
+   91   1          VICVectCntl0 = 0x0000002D;
+   92   1          VICIntEnable = 0x00002000;
+   93   1          VICIntSelect = 0x00000000;
+   94   1          set_time.seconds = 00;
+   95   1          set_time.minutes = 25;
+   96   1          set_time.hours = 11;
+   97   1          set_time.day_of_month = 6;
+   98   1          set_time.day_of_week = 5;
+   99   1          set_time.day_of_year = 279;
+  100   1          set_time.month = 10;
+  101   1          set_time.year = 2017;
+  102   1          RTC_Set_Time(set_time);
+  103   1          CIIR = 0x01; /* Seconds value increment interrupt */
+  104   1          alarm_time.seconds = 15;
+  105   1          alarm_time.minutes = 25;
+  106   1          alarm_time.hours = 11;
+  107   1          alarm_time.day_of_month = 6;
+  108   1          alarm_time.day_of_week = 5;
+  109   1          alarm_time.day_of_year = 279;
+  110   1          alarm_time.month = 10;
+  111   1          alarm_time.year = 2017;
+  112   1          RTC_Set_Alarm_Time(alarm_time); 
+  113   1          CCR = 0x11; /* 32.768kHz clock and clock Enable */
+  114   1          ILR = 0x03; /* RTC interrupts enabled */
+  115   1          IO0CLR = 0x00000010;    
+  116   1      
+  117   1          while(1)
+  118   1          {
+  119   2              if(alarm == 1)
+  120   2              {
+  121   3                  current_time = RTC_Get_Time();
+  122   3                  sprintf(timestr,"Alarm!!!: %d:%d:%d \r\n",current_time.hours,current_time.minutes,current_time.seconds
+             -);
+  123   3                  UART0_SendString(timestr);
+  124   3                  for(i=0;i<10;i++)
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 3   
+
+  125   3                  {
+  126   4                      IO0SET = 0x00000010;
+  127   4                      delay_ms(300);
+  128   4                      IO0CLR = 0x00000010;
+  129   4                      delay_ms(300);
+  130   4                  }
+  131   3                  alarm = 0;
+  132   3              }
+  133   2              if (flag == 1)
+  134   2              {
+  135   3                  current_time = RTC_Get_Time();
+  136   3                  sprintf(timestr,"Time: %d:%d:%d ",current_time.hours,current_time.minutes,current_time.seconds);
+  137   3                  sprintf(datestr,"Date: %d/%d/%d \r\n",current_time.day_of_month,current_time.month,current_time.year);
+  138   3                  UART0_SendString(timestr);
+  139   3                  UART0_SendString(datestr);
+  140   3                  flag = 0;
+  141   3              }
+  142   2          }
+  143   1      }
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 4   
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+
+*** EXTERNALS:
+ EXTERN CODE16 (sprintf?T)
+ EXTERN CODE16 (delay_ms?T)
+ EXTERN CODE16 (UART0_init?T)
+ EXTERN CODE16 (UART0_SendString?T)
+ EXTERN NUMBER (__startup)
+
+
+
+*** PUBLICS:
+ PUBLIC         RTC_ISR?A
+ PUBLIC         RTC_Set_Time?T
+ PUBLIC         RTC_Set_Alarm_Time?T
+ PUBLIC         RTC_Get_Time?T
+ PUBLIC         main
+ PUBLIC         alarm
+ PUBLIC         flag
+
+
+
+*** DATA SEGMENT '?CON?RTC':
+ 00000000          ??S_3:
+ 00000000            DB          'Date: %d/%d/%d ',0x0D,0x0A,0x00
+ 00000012          ??S_2:
+ 00000012            DB          'Time: %d:%d:%d ',0x00
+ 00000022          ??S_1:
+ 00000022            DB          'Alarm!!!: %d:%d:%d ',0x0D,0x0A,0x00
+
+*** DATA SEGMENT '?DT0?RTC':
+ 00000000          alarm:
+ 00000000            DS          4
+ 00000004          flag:
+ 00000004            DS          4
+
+
+
+*** CODE SEGMENT '?PR?RTC_ISR?A?RTC':
+    7: void RTC_ISR(void) __irq 
+ 00000000  E92D0003  STMDB       R13!,{R0-R1}
+    9:     if (ILR & 0x01)
+ 00000004  E5100000  LDR         R0,=0xE0024000
+ 00000008  E5D00000  LDRB        R0,[R0,#0x0]
+ 0000000C  E3100001  TST         R0,#0x0001
+ 00000010  0A000008  BEQ         L_1  ; Targ=0x38
+   11:         flag = 1;
+ 00000014  E3A01001  MOV         R1,#0x1
+ 00000018  E5100000  LDR         R0,=flag ; flag
+ 0000001C  E5801000  STR         R1,[R0,#0x0] ; flag
+   12:         ILR = ILR | 0x01;
+ 00000020  E5100000  LDR         R0,=0xE0024000
+ 00000024  E5D00000  LDRB        R0,[R0,#0x0]
+ 00000028  E1A01000  MOV         R1,R0
+ 0000002C  E3811001  ORR         R1,R1,#0x0001
+ 00000030  E5100000  LDR         R0,=0xE0024000
+ 00000034  E5C01000  STRB        R1,[R0,#0x0]
+   13:     }
+ 00000038          L_1:
+   14:     if (ILR & 0x02)
+ 00000038  E5100000  LDR         R0,=0xE0024000
+ 0000003C  E5D00000  LDRB        R0,[R0,#0x0]
+ 00000040  E3100002  TST         R0,#0x0002
+ 00000044  0A000008  BEQ         L_2  ; Targ=0x6C
+   16:         alarm = 1;
+ 00000048  E3A01001  MOV         R1,#0x1
+ 0000004C  E5100000  LDR         R0,=alarm ; alarm
+ 00000050  E5801000  STR         R1,[R0,#0x0] ; alarm
+   17:         ILR = ILR | 0x02;
+ 00000054  E5100000  LDR         R0,=0xE0024000
+ 00000058  E5D00000  LDRB        R0,[R0,#0x0]
+ 0000005C  E1A01000  MOV         R1,R0
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 5   
+
+ 00000060  E3811002  ORR         R1,R1,#0x0002
+ 00000064  E5100000  LDR         R0,=0xE0024000
+ 00000068  E5C01000  STRB        R1,[R0,#0x0]
+   18:     }
+ 0000006C          L_2:
+   19:     VICVectAddr = 0;
+ 0000006C  E3A01000  MOV         R1,#0x0
+ 00000070  E5100000  LDR         R0,=0xFFFFF030
+ 00000074  E5801000  STR         R1,[R0,#0x0]
+   20: }
+ 00000078  E8BD0003  LDMIA       R13!,{R0-R1}
+ 0000007C  E25EF004  SUBS        R15,R14,#0x0004
+ 00000080          ENDP ; 'RTC_ISR?A'
+
+
+*** CODE SEGMENT '?PR?RTC_Set_Time?T?RTC':
+   36:     SEC = Set_Time.seconds;
+ 00000000  9900      LDR         R1,[R13,#0x0] ; Set_Time
+ 00000002  4800      LDR         R0,=0xE0024020
+ 00000004  7001      STRB        R1,[R0,#0x0]
+   37:     MIN = Set_Time.minutes;
+ 00000006  9901      LDR         R1,[R13,#0x4] ; Set_Time
+ 00000008  4800      LDR         R0,=0xE0024024
+ 0000000A  7001      STRB        R1,[R0,#0x0]
+   38:     HOUR = Set_Time.hours;
+ 0000000C  9902      LDR         R1,[R13,#0x8] ; Set_Time
+ 0000000E  4800      LDR         R0,=0xE0024028
+ 00000010  7001      STRB        R1,[R0,#0x0]
+   39:     DOM = Set_Time.day_of_month;
+ 00000012  9903      LDR         R1,[R13,#0xC] ; Set_Time
+ 00000014  4800      LDR         R0,=0xE002402C
+ 00000016  7001      STRB        R1,[R0,#0x0]
+   40:     DOW = Set_Time.day_of_week;
+ 00000018  9904      LDR         R1,[R13,#0x10] ; Set_Time
+ 0000001A  4800      LDR         R0,=0xE0024030
+ 0000001C  7001      STRB        R1,[R0,#0x0]
+   41:     DOY = Set_Time.day_of_year;
+ 0000001E  9905      LDR         R1,[R13,#0x14] ; Set_Time
+ 00000020  4800      LDR         R0,=0xE0024034
+ 00000022  8001      STRH        R1,[R0,#0x0]
+   42:     MONTH = Set_Time.month;
+ 00000024  9906      LDR         R1,[R13,#0x18] ; Set_Time
+ 00000026  4800      LDR         R0,=0xE0024038
+ 00000028  7001      STRB        R1,[R0,#0x0]
+   43:     YEAR = Set_Time.year;
+ 0000002A  9907      LDR         R1,[R13,#0x1C] ; Set_Time
+ 0000002C  4800      LDR         R0,=0xE002403C
+ 0000002E  8001      STRH        R1,[R0,#0x0]
+   44: }
+ 00000030  4770      BX          R14
+ 00000032          ENDP ; 'RTC_Set_Time?T'
+
+
+*** CODE SEGMENT '?PR?RTC_Set_Alarm_Time?T?RTC':
+   48:     ALSEC = Alarm_Time.seconds;
+ 00000000  9900      LDR         R1,[R13,#0x0] ; Alarm_Time
+ 00000002  4800      LDR         R0,=0xE0024060
+ 00000004  7001      STRB        R1,[R0,#0x0]
+   49:     ALMIN = Alarm_Time.minutes;
+ 00000006  9901      LDR         R1,[R13,#0x4] ; Alarm_Time
+ 00000008  4800      LDR         R0,=0xE0024064
+ 0000000A  7001      STRB        R1,[R0,#0x0]
+   50:     ALHOUR = Alarm_Time.hours;
+ 0000000C  9902      LDR         R1,[R13,#0x8] ; Alarm_Time
+ 0000000E  4800      LDR         R0,=0xE0024068
+ 00000010  7001      STRB        R1,[R0,#0x0]
+   51:     ALDOM = Alarm_Time.day_of_month;
+ 00000012  9903      LDR         R1,[R13,#0xC] ; Alarm_Time
+ 00000014  4800      LDR         R0,=0xE002406C
+ 00000016  7001      STRB        R1,[R0,#0x0]
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 6   
+
+   52:     ALDOW = Alarm_Time.day_of_week;
+ 00000018  9904      LDR         R1,[R13,#0x10] ; Alarm_Time
+ 0000001A  4800      LDR         R0,=0xE0024070
+ 0000001C  7001      STRB        R1,[R0,#0x0]
+   53:     ALDOY = Alarm_Time.day_of_year;
+ 0000001E  9905      LDR         R1,[R13,#0x14] ; Alarm_Time
+ 00000020  4800      LDR         R0,=0xE0024074
+ 00000022  8001      STRH        R1,[R0,#0x0]
+   54:     ALMON = Alarm_Time.month;
+ 00000024  9906      LDR         R1,[R13,#0x18] ; Alarm_Time
+ 00000026  4800      LDR         R0,=0xE0024078
+ 00000028  7001      STRB        R1,[R0,#0x0]
+   55:     ALYEAR = Alarm_Time.year;
+ 0000002A  9907      LDR         R1,[R13,#0x1C] ; Alarm_Time
+ 0000002C  4800      LDR         R0,=0xE002407C
+ 0000002E  8001      STRH        R1,[R0,#0x0]
+   56: }
+ 00000030  4770      BX          R14
+ 00000032          ENDP ; 'RTC_Set_Alarm_Time?T'
+
+
+*** CODE SEGMENT '?PR?RTC_Get_Time?T?RTC':
+   58: RTC_Time RTC_Get_Time(void)
+ 00000000  B410      PUSH        {R4}
+ 00000002  1C04      MOV         R4,R0 ; ?STR_RET?
+ 00000004  ---- Variable '?STR_RET?' assigned to Register 'R4' ----
+ 00000004  B088      SUB         R13,#0x20
+   59: {
+ 00000006            ; SCOPE-START
+   61:     time.seconds = SEC;
+ 00000006  4800      LDR         R0,=0xE0024020
+ 00000008  7800      LDRB        R0,[R0,#0x0]
+ 0000000A  9000      STR         R0,[R13,#0x0] ; time
+   62:     time.minutes = MIN;
+ 0000000C  4800      LDR         R0,=0xE0024024
+ 0000000E  7800      LDRB        R0,[R0,#0x0]
+ 00000010  9001      STR         R0,[R13,#0x4] ; time
+   63:     time.hours = HOUR;
+ 00000012  4800      LDR         R0,=0xE0024028
+ 00000014  7800      LDRB        R0,[R0,#0x0]
+ 00000016  9002      STR         R0,[R13,#0x8] ; time
+   64:     time.day_of_month = DOM;
+ 00000018  4800      LDR         R0,=0xE002402C
+ 0000001A  7800      LDRB        R0,[R0,#0x0]
+ 0000001C  9003      STR         R0,[R13,#0xC] ; time
+   65:     time.day_of_week = DOW;
+ 0000001E  4800      LDR         R0,=0xE0024030
+ 00000020  7800      LDRB        R0,[R0,#0x0]
+ 00000022  9004      STR         R0,[R13,#0x10] ; time
+   66:     time.day_of_year = DOY;
+ 00000024  4800      LDR         R0,=0xE0024034
+ 00000026  8800      LDRH        R0,[R0,#0x0]
+ 00000028  9005      STR         R0,[R13,#0x14] ; time
+   67:     time.month = MONTH;
+ 0000002A  4800      LDR         R0,=0xE0024038
+ 0000002C  7800      LDRB        R0,[R0,#0x0]
+ 0000002E  9006      STR         R0,[R13,#0x18] ; time
+   68:     time.year = YEAR;
+ 00000030  4800      LDR         R0,=0xE002403C
+ 00000032  8800      LDRH        R0,[R0,#0x0]
+ 00000034  9007      STR         R0,[R13,#0x1C] ; time
+   69:     return time;
+ 00000036  A900      ADD         R1,R13,#0x0
+ 00000038  1C20      MOV         R0,R4 ; ?STR_RET?
+ 0000003A  1C00      MOV         R0,R0 ; ?STR_RET?
+ 0000003C  D004      BEQ         L_17  ; T=0x00000048
+ 0000003E  2208      MOV         R2,#0x8
+ 00000040          L_18:
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 7   
+
+ 00000040  C908      LDMIA       R1!,{R3}
+ 00000042  C008      STMIA       R0!,{R3}
+ 00000044  1E52      SUB         R2,R2,#0x1
+ 00000046  D1FB      BNE         L_18  ; T=0x00000040
+ 00000048          L_17:
+ 00000048            ; SCOPE-END
+   70: }
+ 00000048  B008      ADD         R13,#0x20
+ 0000004A  BC10      POP         {R4}
+ 0000004C  4770      BX          R14
+ 0000004E          ENDP ; 'RTC_Get_Time?T'
+
+
+*** CODE SEGMENT '?PR?main?RTC':
+   72: int main(void)
+ 00000000  B500      PUSH        {LR}
+ 00000002  B0A8      SUB         R13,#0xA0
+   73: {
+ 00000004            ; SCOPE-START
+   79:     alarm = 0;
+ 00000004  2100      MOV         R1,#0x0
+ 00000006  4800      LDR         R0,=alarm ; alarm
+ 00000008  6001      STR         R1,[R0,#0x0] ; alarm
+   80:     flag = 0;
+ 0000000A  2100      MOV         R1,#0x0
+ 0000000C  4800      LDR         R0,=flag ; flag
+ 0000000E  6001      STR         R1,[R0,#0x0] ; flag
+   81:     IO0DIR = 0x00000010; /* P0.4 as output pin for LED */
+ 00000010  2110      MOV         R1,#0x10
+ 00000012  4800      LDR         R0,=0xE0028008
+ 00000014  6001      STR         R1,[R0,#0x0]
+   82:     UART0_init();
+ 00000016  F7FF      BL          UART0_init?T  ; T=0x0001  (1)
+ 00000018  FFF3      BL          UART0_init?T  ; T=0x0001  (2)
+   83:     PCONP = (PCONP | (1<<9)); /* PCRTC = 1 */
+ 0000001A  4800      LDR         R0,=0xE01FC0C4
+ 0000001C  6801      LDR         R1,[R0,#0x0]
+ 0000001E  4880      LDR         R0,=0x200
+ 00000020  4301      ORR         R1,R0
+ 00000022  4800      LDR         R0,=0xE01FC0C4
+ 00000024  6001      STR         R1,[R0,#0x0]
+   85:     ILR = 0x0; /* No RTC interrupts */
+ 00000026  2100      MOV         R1,#0x0
+ 00000028  4800      LDR         R0,=0xE0024000
+ 0000002A  7001      STRB        R1,[R0,#0x0]
+   86:     CCR = 0x12; /* 32.768kHz clock and Reset Clock Tick Counter */
+ 0000002C  2112      MOV         R1,#0x12
+ 0000002E  4800      LDR         R0,=0xE0024008
+ 00000030  7001      STRB        R1,[R0,#0x0]
+   87:     CCR = 0x10; 
+ 00000032  2110      MOV         R1,#0x10
+ 00000034  4800      LDR         R0,=0xE0024008
+ 00000036  7001      STRB        R1,[R0,#0x0]
+   88:     CIIR = 0x00; /* No interrupts */
+ 00000038  2100      MOV         R1,#0x0
+ 0000003A  4800      LDR         R0,=0xE002400C
+ 0000003C  7001      STRB        R1,[R0,#0x0]
+   89:     AMR = 0x00; /* Alarm registers not masked */
+ 0000003E  2100      MOV         R1,#0x0
+ 00000040  4800      LDR         R0,=0xE0024010
+ 00000042  7001      STRB        R1,[R0,#0x0]
+   90:     VICVectAddr0 = (unsigned) RTC_ISR;
+ 00000044  4900      LDR         R1,=RTC_ISR?A ; RTC_ISR?A
+ 00000046  4800      LDR         R0,=0xFFFFF100
+ 00000048  6001      STR         R1,[R0,#0x0]
+   91:     VICVectCntl0 = 0x0000002D;
+ 0000004A  212D      MOV         R1,#0x2D
+ 0000004C  4800      LDR         R0,=0xFFFFF200
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 8   
+
+ 0000004E  6001      STR         R1,[R0,#0x0]
+   92:     VICIntEnable = 0x00002000;
+ 00000050  4800      LDR         R1,=0x2000
+ 00000052  4800      LDR         R0,=0xFFFFF010
+ 00000054  6001      STR         R1,[R0,#0x0]
+   93:     VICIntSelect = 0x00000000;
+ 00000056  2100      MOV         R1,#0x0
+ 00000058  4800      LDR         R0,=0xFFFFF00C
+ 0000005A  6001      STR         R1,[R0,#0x0]
+   94:     set_time.seconds = 00;
+ 0000005C  2000      MOV         R0,#0x0
+ 0000005E  9000      STR         R0,[R13,#0x0] ; set_time
+   95:     set_time.minutes = 25;
+ 00000060  2019      MOV         R0,#0x19
+ 00000062  9001      STR         R0,[R13,#0x4] ; set_time
+   96:     set_time.hours = 11;
+ 00000064  200B      MOV         R0,#0xB
+ 00000066  9002      STR         R0,[R13,#0x8] ; set_time
+   97:     set_time.day_of_month = 6;
+ 00000068  2006      MOV         R0,#0x6
+ 0000006A  9003      STR         R0,[R13,#0xC] ; set_time
+   98:     set_time.day_of_week = 5;
+ 0000006C  2005      MOV         R0,#0x5
+ 0000006E  9004      STR         R0,[R13,#0x10] ; set_time
+   99:     set_time.day_of_year = 279;
+ 00000070  4800      LDR         R0,=0x117
+ 00000072  9005      STR         R0,[R13,#0x14] ; set_time
+  100:     set_time.month = 10;
+ 00000074  200A      MOV         R0,#0xA
+ 00000076  9006      STR         R0,[R13,#0x18] ; set_time
+  101:     set_time.year = 2017;
+ 00000078  4800      LDR         R0,=0x7E1
+ 0000007A  9007      STR         R0,[R13,#0x1C] ; set_time
+  102:     RTC_Set_Time(set_time);
+ 0000007C  A800      ADD         R0,R13,#0x0
+ 0000007E  B088      SUB         R13,#0x20
+ 00000080  4669      MOV         R1,R13
+ 00000082  2308      MOV         R3,#0x8
+ 00000084          L_21:
+ 00000084  C804      LDMIA       R0!,{R2}
+ 00000086  C104      STMIA       R1!,{R2}
+ 00000088  1E5B      SUB         R3,R3,#0x1
+ 0000008A  D1FB      BNE         L_21  ; T=0x00000084
+ 0000008C  F7FF      BL          RTC_Set_Time?T  ; T=0x0001  (1)
+ 0000008E  FFB8      BL          RTC_Set_Time?T  ; T=0x0001  (2)
+ 00000090  B008      ADD         R13,#0x20
+  103:     CIIR = 0x01; /* Seconds value increment interrupt */
+ 00000092  2101      MOV         R1,#0x1
+ 00000094  4800      LDR         R0,=0xE002400C
+ 00000096  7001      STRB        R1,[R0,#0x0]
+  104:     alarm_time.seconds = 15;
+ 00000098  200F      MOV         R0,#0xF
+ 0000009A  9008      STR         R0,[R13,#0x20] ; alarm_time
+  105:     alarm_time.minutes = 25;
+ 0000009C  2019      MOV         R0,#0x19
+ 0000009E  9009      STR         R0,[R13,#0x24] ; alarm_time
+  106:     alarm_time.hours = 11;
+ 000000A0  200B      MOV         R0,#0xB
+ 000000A2  900A      STR         R0,[R13,#0x28] ; alarm_time
+  107:     alarm_time.day_of_month = 6;
+ 000000A4  2006      MOV         R0,#0x6
+ 000000A6  900B      STR         R0,[R13,#0x2C] ; alarm_time
+  108:     alarm_time.day_of_week = 5;
+ 000000A8  2005      MOV         R0,#0x5
+ 000000AA  900C      STR         R0,[R13,#0x30] ; alarm_time
+  109:     alarm_time.day_of_year = 279;
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 9   
+
+ 000000AC  4800      LDR         R0,=0x117
+ 000000AE  900D      STR         R0,[R13,#0x34] ; alarm_time
+  110:     alarm_time.month = 10;
+ 000000B0  200A      MOV         R0,#0xA
+ 000000B2  900E      STR         R0,[R13,#0x38] ; alarm_time
+  111:     alarm_time.year = 2017;
+ 000000B4  4800      LDR         R0,=0x7E1
+ 000000B6  900F      STR         R0,[R13,#0x3C] ; alarm_time
+  112:     RTC_Set_Alarm_Time(alarm_time); 
+ 000000B8  A808      ADD         R0,R13,#0x20
+ 000000BA  B088      SUB         R13,#0x20
+ 000000BC  4669      MOV         R1,R13
+ 000000BE  2308      MOV         R3,#0x8
+ 000000C0          L_22:
+ 000000C0  C804      LDMIA       R0!,{R2}
+ 000000C2  C104      STMIA       R1!,{R2}
+ 000000C4  1E5B      SUB         R3,R3,#0x1
+ 000000C6  D1FB      BNE         L_22  ; T=0x000000C0
+ 000000C8  F7FF      BL          RTC_Set_Alarm_Time?T  ; T=0x0001  (1)
+ 000000CA  FF9A      BL          RTC_Set_Alarm_Time?T  ; T=0x0001  (2)
+ 000000CC  B008      ADD         R13,#0x20
+  113:     CCR = 0x11; /* 32.768kHz clock and clock Enable */
+ 000000CE  2111      MOV         R1,#0x11
+ 000000D0  4800      LDR         R0,=0xE0024008
+ 000000D2  7001      STRB        R1,[R0,#0x0]
+  114:     ILR = 0x03; /* RTC interrupts enabled */
+ 000000D4  2103      MOV         R1,#0x3
+ 000000D6  4800      LDR         R0,=0xE0024000
+ 000000D8  7001      STRB        R1,[R0,#0x0]
+  115:     IO0CLR = 0x00000010;    
+ 000000DA  2110      MOV         R1,#0x10
+ 000000DC  4800      LDR         R0,=0xE002800C
+ 000000DE  6001      STR         R1,[R0,#0x0]
+  117:     while(1)
+ 000000E0          L_6:
+  119:         if(alarm == 1)
+ 000000E0  4800      LDR         R0,=alarm ; alarm
+ 000000E2  6800      LDR         R0,[R0,#0x0] ; alarm
+ 000000E4  2801      CMP         R0,#0x1
+ 000000E6  D122      BNE         L_8  ; T=0x0000012E
+  121:             current_time = RTC_Get_Time();
+ 000000E8  A810      ADD         R0,R13,#0x40
+ 000000EA  F7FF      BL          RTC_Get_Time?T  ; T=0x0001  (1)
+ 000000EC  FF89      BL          RTC_Get_Time?T  ; T=0x0001  (2)
+  122:             sprintf(timestr,"Alarm!!!: %d:%d:%d \r\n",current_time.hours,current_time.minutes,current_time.seconds);
+ 000000EE  9810      LDR         R0,[R13,#0x40] ; current_time
+ 000000F0  B401      PUSH        {R0}
+ 000000F2  A819      ADD         R0,R13,#0x64
+ 000000F4  4800      LDR         R1,=??S_1 ; ??S_1
+ 000000F6  9A13      LDR         R2,[R13,#0x4C] ; current_time
+ 000000F8  9B12      LDR         R3,[R13,#0x48] ; current_time
+ 000000FA  F7FF      BL          sprintf?T  ; T=0x0001  (1)
+ 000000FC  FF81      BL          sprintf?T  ; T=0x0001  (2)
+ 000000FE  B001      ADD         R13,#0x4
+  123:             UART0_SendString(timestr);
+ 00000100  A818      ADD         R0,R13,#0x60
+ 00000102  F7FF      BL          UART0_SendString?T  ; T=0x0001  (1)
+ 00000104  FF7D      BL          UART0_SendString?T  ; T=0x0001  (2)
+  124:             for(i=0;i<10;i++)
+ 00000106  2400      MOV         R4,#0x0
+ 00000108  ---- Variable 'i' assigned to Register 'R4' ----
+ 00000108          L_12:
+  126:                 IO0SET = 0x00000010;
+ 00000108  2110      MOV         R1,#0x10
+ 0000010A  4800      LDR         R0,=0xE0028004
+ 0000010C  6001      STR         R1,[R0,#0x0]
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 10  
+
+  127:                 delay_ms(300);
+ 0000010E  484B      LDR         R0,=0x12C
+ 00000110  F7FF      BL          delay_ms?T  ; T=0x0001  (1)
+ 00000112  FF76      BL          delay_ms?T  ; T=0x0001  (2)
+  128:                 IO0CLR = 0x00000010;
+ 00000114  2110      MOV         R1,#0x10
+ 00000116  4800      LDR         R0,=0xE002800C
+ 00000118  6001      STR         R1,[R0,#0x0]
+  129:                 delay_ms(300);
+ 0000011A  484B      LDR         R0,=0x12C
+ 0000011C  F7FF      BL          delay_ms?T  ; T=0x0001  (1)
+ 0000011E  FF70      BL          delay_ms?T  ; T=0x0001  (2)
+  130:             }
+ 00000120  3401      ADD         R4,#0x1
+ 00000122  1C20      MOV         R0,R4 ; i
+ 00000124  280A      CMP         R0,#0xA ; i
+ 00000126  D3EF      BCC         L_12  ; T=0x00000108
+  131:             alarm = 0;
+ 00000128  2100      MOV         R1,#0x0
+ 0000012A  4800      LDR         R0,=alarm ; alarm
+ 0000012C  6001      STR         R1,[R0,#0x0] ; alarm
+  132:         }
+ 0000012E          L_8:
+  133:         if (flag == 1)
+ 0000012E  4800      LDR         R0,=flag ; flag
+ 00000130  6800      LDR         R0,[R0,#0x0] ; flag
+ 00000132  2801      CMP         R0,#0x1
+ 00000134  D1D4      BNE         L_6  ; T=0x000000E0
+  135:             current_time = RTC_Get_Time();
+ 00000136  A810      ADD         R0,R13,#0x40
+ 00000138  F7FF      BL          RTC_Get_Time?T  ; T=0x0001  (1)
+ 0000013A  FF62      BL          RTC_Get_Time?T  ; T=0x0001  (2)
+  136:             sprintf(timestr,"Time: %d:%d:%d ",current_time.hours,current_time.minutes,current_time.seconds);
+ 0000013C  9810      LDR         R0,[R13,#0x40] ; current_time
+ 0000013E  B401      PUSH        {R0}
+ 00000140  A819      ADD         R0,R13,#0x64
+ 00000142  4800      LDR         R1,=??S_2 ; ??S_2
+ 00000144  9A13      LDR         R2,[R13,#0x4C] ; current_time
+ 00000146  9B12      LDR         R3,[R13,#0x48] ; current_time
+ 00000148  F7FF      BL          sprintf?T  ; T=0x0001  (1)
+ 0000014A  FF5A      BL          sprintf?T  ; T=0x0001  (2)
+ 0000014C  B001      ADD         R13,#0x4
+  137:             sprintf(datestr,"Date: %d/%d/%d \r\n",current_time.day_of_month,current_time.month,current_time.year);
+ 0000014E  9817      LDR         R0,[R13,#0x5C] ; current_time
+ 00000150  B401      PUSH        {R0}
+ 00000152  A821      ADD         R0,R13,#0x84
+ 00000154  4800      LDR         R1,=??S_3 ; ??S_3
+ 00000156  9A14      LDR         R2,[R13,#0x50] ; current_time
+ 00000158  9B17      LDR         R3,[R13,#0x5C] ; current_time
+ 0000015A  F7FF      BL          sprintf?T  ; T=0x0001  (1)
+ 0000015C  FF51      BL          sprintf?T  ; T=0x0001  (2)
+ 0000015E  B001      ADD         R13,#0x4
+  138:             UART0_SendString(timestr);
+ 00000160  A818      ADD         R0,R13,#0x60
+ 00000162  F7FF      BL          UART0_SendString?T  ; T=0x0001  (1)
+ 00000164  FF4D      BL          UART0_SendString?T  ; T=0x0001  (2)
+  139:             UART0_SendString(datestr);
+ 00000166  A820      ADD         R0,R13,#0x80
+ 00000168  F7FF      BL          UART0_SendString?T  ; T=0x0001  (1)
+ 0000016A  FF4A      BL          UART0_SendString?T  ; T=0x0001  (2)
+  140:             flag = 0;
+ 0000016C  2100      MOV         R1,#0x0
+ 0000016E  4800      LDR         R0,=flag ; flag
+ 00000170  6001      STR         R1,[R0,#0x0] ; flag
+  142:     }
+ 00000172  E7B5      B           L_6  ; T=0x000000E0
+ARM COMPILER V2.40a,  RTC                                                                  10/09/23  16:13:57  PAGE 11  
+
+ 00000174            ; SCOPE-END
+  143: }
+ 00000174  B028      ADD         R13,#0xA0
+ 00000176  BC08      POP         {R3}
+ 00000178  4718      BX          R3
+ 0000017A          ENDP ; 'main'
+
+
+
+Module Information          Static
+----------------------------------
+  code size            =    ------
+  data size            =         8
+  const size           =        56
+End of Module Information.
+
+
+ARM COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

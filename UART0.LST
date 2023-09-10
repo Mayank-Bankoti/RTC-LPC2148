@@ -1,0 +1,277 @@
+ARM COMPILER V2.40a,  UART0                                                                10/09/23  16:13:57  PAGE 1   
+
+
+ARM COMPILER V2.40a, COMPILATION OF MODULE UART0
+OBJECT MODULE PLACED IN UART0.OBJ
+COMPILER INVOKED BY: C:\Keil\ARM\BIN\CA.exe UART0.c THUMB BROWSE DEBUG TABS(4) 
+
+stmt  level    source
+
+    1          
+    2          #include "UART0.h"
+    3          char receive_string[50];
+    4          
+    5          void delay_ms(unsigned int j) /* Function for delay in milliseconds  */
+    6          {
+    7   1          unsigned int x,i;
+    8   1          for(i=0;i<j;i++)
+    9   1          {
+   10   2          for(x=0; x<6000; x++);    /* loop to generate 1 millisecond delay with Cclk = 60MHz */
+   11   2          }
+   12   1      }
+   13          
+   14          void UART0_init(void)
+   15          {
+   16   1          PINSEL0 = PINSEL0 | 0x00000005; /* Enable UART0 Rx0 and Tx0 pins of UART0 */
+   17   1          U0LCR = 0x83;   /* DLAB = 1, 1 stop bit, 8-bit character length */
+   18   1          U0DLM = 0x00;   /* For baud rate of 9600 with Pclk = 15MHz */
+   19   1          U0DLL = 0x61;   /* We get these values of U0DLL and U0DLM from formula */
+   20   1          U0LCR = 0x03; /* DLAB = 0 */
+   21   1          delay_ms(5);
+   22   1      }
+   23          
+   24          void UART0_TxChar(char ch) /* A function to send a byte on UART0 */
+   25          {
+   26   1          U0THR = ch;
+   27   1          while( (U0LSR & 0x40) == 0 );   /* Wait till THRE bit becomes 1 which tells that transmission is completed
+             - */
+   28   1      }
+   29          
+   30          void UART0_SendString(char* str) /* A function to send string on UART0 */
+   31          {
+   32   1          unsigned int i = 0;
+   33   1          while( str[i] != '\0' )
+   34   1          {
+   35   2              UART0_TxChar(str[i]);
+   36   2              i++;
+   37   2          }
+   38   1      }
+   39          
+   40          unsigned char UART0_RxChar(void) /* A function to receive a byte on UART0 */
+   41          {
+   42   1          while( (U0LSR & 0x01) == 0);    /* Wait till RDR bit becomes 1 which tells that receiver contains valid dat
+             -a */
+   43   1              return U0RBR;
+   44   1      }
+   45          
+   46          void UART0_RxString(void) /* A function to receive string on UART0 */
+   47          {
+   48   1          unsigned int i = 0;
+   49   1          do{
+   50   2          while( (U0LSR & 0x01) == 0);
+   51   2                  receive_string[i] = U0RBR;
+   52   2              i++;
+   53   2          }while( (U0RBR != 0x0D) );
+   54   1      }
+ARM COMPILER V2.40a,  UART0                                                                10/09/23  16:13:57  PAGE 2   
+
+ASSEMBLY LISTING OF GENERATED OBJECT CODE
+
+
+
+*** PUBLICS:
+ PUBLIC         delay_ms?T
+ PUBLIC         UART0_init?T
+ PUBLIC         UART0_TxChar?T
+ PUBLIC         UART0_SendString?T
+ PUBLIC         UART0_RxChar?T
+ PUBLIC         UART0_RxString?T
+ PUBLIC         receive_string
+
+
+
+*** DATA SEGMENT '?DT0?UART0':
+ 00000000          receive_string:
+ 00000000            DS          50
+
+
+
+*** CODE SEGMENT '?PR?delay_ms?T?UART0':
+    5: void delay_ms(unsigned int j) /* Function for delay in milliseconds  */
+ 00000000  B410      PUSH        {R4}
+ 00000002  ---- Variable 'j' assigned to Register 'R0' ----
+    6: {
+ 00000002            ; SCOPE-START
+    8:     for(i=0;i<j;i++)
+ 00000002  2100      MOV         R1,#0x0
+ 00000004  ---- Variable 'i' assigned to Register 'R1' ----
+ 00000004  E006      B           L_3  ; T=0x00000014
+   10:     for(x=0; x<6000; x++);    /* loop to generate 1 millisecond delay with Cclk = 60MHz */
+ 00000006          L_10:
+ 00000006  2200      MOV         R2,#0x0
+ 00000008  ---- Variable 'x' assigned to Register 'R2' ----
+ 00000008          L_6:
+ 00000008  3201      ADD         R2,#0x1
+ 0000000A  1C13      MOV         R3,R2 ; x
+ 0000000C  4800      LDR         R4,=0x1770
+ 0000000E  42A3      CMP         R3,R4 ; x
+ 00000010  D3FA      BCC         L_6  ; T=0x00000008
+   11:     }
+ 00000012  3101      ADD         R1,#0x1
+ 00000014          L_3:
+ 00000014  1C03      MOV         R3,R0 ; j
+ 00000016  1C0A      MOV         R2,R1 ; i
+ 00000018  429A      CMP         R2,R3 ; i
+ 0000001A  D3F4      BCC         L_10  ; T=0x00000006
+ 0000001C            ; SCOPE-END
+   12: }
+ 0000001C  BC10      POP         {R4}
+ 0000001E  4770      BX          R14
+ 00000020          ENDP ; 'delay_ms?T'
+
+
+*** CODE SEGMENT '?PR?UART0_init?T?UART0':
+   14: void UART0_init(void)
+ 00000000  B500      PUSH        {LR}
+   16:     PINSEL0 = PINSEL0 | 0x00000005; /* Enable UART0 Rx0 and Tx0 pins of UART0 */
+ 00000002  4800      LDR         R0,=0xE002C000
+ 00000004  6801      LDR         R1,[R0,#0x0]
+ 00000006  2005      MOV         R0,#0x5
+ 00000008  4301      ORR         R1,R0
+ 0000000A  4800      LDR         R0,=0xE002C000
+ 0000000C  6001      STR         R1,[R0,#0x0]
+   17:     U0LCR = 0x83;   /* DLAB = 1, 1 stop bit, 8-bit character length */
+ 0000000E  2183      MOV         R1,#0x83
+ 00000010  4800      LDR         R0,=0xE000C00C
+ 00000012  7001      STRB        R1,[R0,#0x0]
+   18:     U0DLM = 0x00;   /* For baud rate of 9600 with Pclk = 15MHz */
+ 00000014  2100      MOV         R1,#0x0
+ 00000016  4800      LDR         R0,=0xE000C004
+ 00000018  7001      STRB        R1,[R0,#0x0]
+ARM COMPILER V2.40a,  UART0                                                                10/09/23  16:13:57  PAGE 3   
+
+   19:     U0DLL = 0x61;   /* We get these values of U0DLL and U0DLM from formula */
+ 0000001A  2161      MOV         R1,#0x61
+ 0000001C  4800      LDR         R0,=0xE000C000
+ 0000001E  7001      STRB        R1,[R0,#0x0]
+   20:     U0LCR = 0x03; /* DLAB = 0 */
+ 00000020  2103      MOV         R1,#0x3
+ 00000022  4800      LDR         R0,=0xE000C00C
+ 00000024  7001      STRB        R1,[R0,#0x0]
+   21:     delay_ms(5);
+ 00000026  2005      MOV         R0,#0x5
+ 00000028  F7FF      BL          delay_ms?T  ; T=0x0001  (1)
+ 0000002A  FFEA      BL          delay_ms?T  ; T=0x0001  (2)
+   22: }
+ 0000002C  BC08      POP         {R3}
+ 0000002E  4718      BX          R3
+ 00000030          ENDP ; 'UART0_init?T'
+
+
+*** CODE SEGMENT '?PR?UART0_TxChar?T?UART0':
+   24: void UART0_TxChar(char ch) /* A function to send a byte on UART0 */
+ 00000000  1C02      MOV         R2,R0 ; ch
+ 00000002  ---- Variable 'ch' assigned to Register 'R2' ----
+   26:     U0THR = ch;
+ 00000002  1C11      MOV         R1,R2 ; ch
+ 00000004  4800      LDR         R0,=0xE000C000
+ 00000006  7001      STRB        R1,[R0,#0x0]
+   27:     while( (U0LSR & 0x40) == 0 );   /* Wait till THRE bit becomes 1 which tells that transmission is completed */
+ 00000008          L_11:
+ 00000008  4800      LDR         R0,=0xE000C014
+ 0000000A  7800      LDRB        R0,[R0,#0x0]
+ 0000000C  2140      MOV         R1,#0x40
+ 0000000E  4208      TST         R0,R1
+ 00000010  D0FA      BEQ         L_11  ; T=0x00000008
+   28: }
+ 00000012  4770      BX          R14
+ 00000014          ENDP ; 'UART0_TxChar?T'
+
+
+*** CODE SEGMENT '?PR?UART0_SendString?T?UART0':
+   30: void UART0_SendString(char* str) /* A function to send string on UART0 */
+ 00000000  B510      PUSH        {R4,LR}
+ 00000002  1C04      MOV         R4,R0 ; str
+ 00000004  ---- Variable 'str' assigned to Register 'R4' ----
+   31: {
+ 00000004            ; SCOPE-START
+   32:     unsigned int i = 0;
+ 00000004  2300      MOV         R3,#0x0
+ 00000006  ---- Variable 'i' assigned to Register 'R3' ----
+   33:     while( str[i] != '\0' )
+ 00000006  E005      B           L_15  ; T=0x00000014
+ 00000008          L_17:
+   35:         UART0_TxChar(str[i]);
+ 00000008  1C19      MOV         R1,R3 ; i
+ 0000000A  1C20      MOV         R0,R4 ; str
+ 0000000C  5C40      LDRB        R0,[R0,R1]
+ 0000000E  F7FF      BL          UART0_TxChar?T  ; T=0x0001  (1)
+ 00000010  FFF7      BL          UART0_TxChar?T  ; T=0x0001  (2)
+   36:         i++;
+ 00000012  3301      ADD         R3,#0x1
+   37:     }
+ 00000014          L_15:
+ 00000014  1C19      MOV         R1,R3 ; i
+ 00000016  1C20      MOV         R0,R4 ; str
+ 00000018  5C40      LDRB        R0,[R0,R1]
+ 0000001A  2800      CMP         R0,#0x0
+ 0000001C  D1F4      BNE         L_17  ; T=0x00000008
+ 0000001E            ; SCOPE-END
+   38: }
+ 0000001E  BC10      POP         {R4}
+ 00000020  BC08      POP         {R3}
+ARM COMPILER V2.40a,  UART0                                                                10/09/23  16:13:57  PAGE 4   
+
+ 00000022  4718      BX          R3
+ 00000024          ENDP ; 'UART0_SendString?T'
+
+
+*** CODE SEGMENT '?PR?UART0_RxChar?T?UART0':
+   42:     while( (U0LSR & 0x01) == 0);    /* Wait till RDR bit becomes 1 which tells that receiver contains valid data */
+ 00000000          L_19:
+ 00000000  4800      LDR         R0,=0xE000C014
+ 00000002  7800      LDRB        R0,[R0,#0x0]
+ 00000004  2101      MOV         R1,#0x1
+ 00000006  4208      TST         R0,R1
+ 00000008  D0FA      BEQ         L_19  ; T=0x00000000
+   43:         return U0RBR;
+ 0000000A  4800      LDR         R0,=0xE000C000
+ 0000000C  7800      LDRB        R0,[R0,#0x0]
+   44: }
+ 0000000E  4770      BX          R14
+ 00000010          ENDP ; 'UART0_RxChar?T'
+
+
+*** CODE SEGMENT '?PR?UART0_RxString?T?UART0':
+   47: {
+ 00000000            ; SCOPE-START
+   48:     unsigned int i = 0;
+ 00000000  2000      MOV         R0,#0x0
+ 00000002  ---- Variable 'i' assigned to Register 'R0' ----
+   50:     while( (U0LSR & 0x01) == 0);
+ 00000002          L_31:
+ 00000002          L_28:
+ 00000002  4800      LDR         R1,=0xE000C014
+ 00000004  7809      LDRB        R1,[R1,#0x0]
+ 00000006  2201      MOV         R2,#0x1
+ 00000008  4211      TST         R1,R2
+ 0000000A  D0FA      BEQ         L_28  ; T=0x00000002
+   51:             receive_string[i] = U0RBR;
+ 0000000C  4800      LDR         R1,=0xE000C000
+ 0000000E  7809      LDRB        R1,[R1,#0x0]
+ 00000010  1C03      MOV         R3,R0 ; i
+ 00000012  4800      LDR         R2,=receive_string ; receive_string
+ 00000014  54D1      STRB        R1,[R2,R3]
+   52:         i++;
+ 00000016  3001      ADD         R0,#0x1
+   53:     }while( (U0RBR != 0x0D) );
+ 00000018  4800      LDR         R1,=0xE000C000
+ 0000001A  7809      LDRB        R1,[R1,#0x0]
+ 0000001C  290D      CMP         R1,#0xD
+ 0000001E  D1F0      BNE         L_31  ; T=0x00000002
+ 00000020            ; SCOPE-END
+   54: }
+ 00000020  4770      BX          R14
+ 00000022          ENDP ; 'UART0_RxString?T'
+
+
+
+Module Information          Static
+----------------------------------
+  code size            =    ------
+  data size            =        50
+  const size           =    ------
+End of Module Information.
+
+
+ARM COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
